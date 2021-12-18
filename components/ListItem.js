@@ -1,26 +1,28 @@
 import React from 'react'
 import { TouchableOpacity, StyleSheet, Text, Image, View } from 'react-native';
 
-const ListItem = () => {
+const ListItem = ({name, symbol, currentPrice, priceChange, logoUrl}) => {
+  const priceChangeColor = priceChange > 0 ? '#34C759' : '#FF3B30';
+
   return (
     <TouchableOpacity>
       <View style={styles.itemWrapper}>
         {/* Left side of the list item */}
         <View style={styles.leftWrapper}>
           <Image
-            source={require('../assets/ethereum.png')}
+            source={{uri: logoUrl}}
             style={styles.image}>
           </Image>
           <View style={styles.titlesWrapper}>
-            <Text style={styles.title}>Ethereum</Text>
-            <Text style={styles.subtitle}>ETH</Text>
+            <Text style={styles.title}>{name}</Text>
+            <Text style={styles.subtitle}>{symbol.toUpperCase()}</Text>
           </View>
         </View>
 
         {/* Right side of the list item */}
         <View style={styles.rightWrapper}>
-          <Text style={styles.title}>Price</Text>
-          <Text style={styles.subtitle, {color: 'red'}}>Value</Text>
+          <Text style={styles.title}>${currentPrice.toLocaleString('en-US', {currency: 'USD'})}</Text>
+          <Text style={styles.subtitle, { color: priceChangeColor }}>{priceChange.toFixed(2)}%</Text>
         </View>
 
       </View>
