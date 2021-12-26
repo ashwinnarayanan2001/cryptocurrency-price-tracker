@@ -1,55 +1,70 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList } from 'react-native';
+import React, {useRef, useMemo, useState, useEffect} from 'react';
+import { FlatList, StyleSheet, Text, View, SafeAreaView } from 'react-native';
 import ListItem from './components/ListItem';
+import Chart from './components/Chart';
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
 } from '@gorhom/bottom-sheet';
-import { SAMPLE_DATA } from './assets/data/sampleData';
-import Chart from './components/Chart';
+import { getMarketData } from './services/cryptoService';
+
+const ListHeader = () => (
+  <>
+    <View style={styles.titleWrapper}>
+        <Text style={styles.largeTitle}>Markets</Text>
+      </View>
+    <View style={styles.divider} />
+  </>
+)
 
 export default function App() {
+  const [data, setData] = useState([]);
   const [selectedCoinData, setSelectedCoinData] = useState(null);
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      const marketData = await getMarketData();
+      setData(marketData);
+    }
+
+    fetchMarketData();
+  }, [])
 
   const bottomSheetModalRef = useRef(null);
 
-  // variables
-  const snapPoints = useMemo(() => ['45%'], []);
+  const snapPoints = useMemo(() => ['50%'], []);
 
   const openModal = (item) => {
     setSelectedCoinData(item);
-    bottomSheetModalRef.current.present();
+    bottomSheetModalRef.current?.present();
   }
 
   return (
     <BottomSheetModalProvider>
-      <View style={styles.container}>
-        <View style={styles.titleWrapper}>
-          <Text style={styles.largeTitle}>Markets</Text>
-        </View>
-        <View style={styles.divider} />
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        keyExtractor={(item) => item.id}
+        data={data}
+        renderItem={({ item }) => (
+          <ListItem
+            name={item.name}
+            symbol={item.symbol}
+            currentPrice={item.current_price}
+            priceChangePercentage7d={item.price_change_percentage_7d_in_currency}
+            logoUrl={item.image}
+            onPress={() => openModal(item)}
+          />
+        )}
+        ListHeaderComponent={<ListHeader />}
+      />
+      </SafeAreaView>
 
-        <FlatList
-          keyExtractor={(item) => item.id}
-          data={SAMPLE_DATA}
-          renderItem={({ item }) => (
-            <ListItem
-              name={item.name}
-              symbol={item.symbol}
-              currentPrice={item.current_price}
-              priceChange={item.price_change_percentage_7d_in_currency}
-              logoUrl={item.image}
-              onPress={ () => openModal(item)}
-            />
-          )}
-        />
-      </View>
       <BottomSheetModal
-          ref={bottomSheetModalRef}
-          index={0}
-          snapPoints={snapPoints}
-          style={styles.bottomSheet}
-        >
+        ref={bottomSheetModalRef}
+        index={0}
+        snapPoints={snapPoints}
+        style={styles.bottomSheet}
+      >
         { selectedCoinData ? (
           <Chart
             currentPrice={selectedCoinData.current_price}
@@ -57,10 +72,10 @@ export default function App() {
             name={selectedCoinData.name}
             symbol={selectedCoinData.symbol}
             priceChangePercentage7d={selectedCoinData.price_change_percentage_7d_in_currency}
-            sparkline={selectedCoinData.sparkline_in_7d.price}
-          /> ) : null
-        }
-        </BottomSheetModal>
+            sparkline={selectedCoinData?.sparkline_in_7d.price}
+          />
+        ) : null}
+      </BottomSheetModal>
       </BottomSheetModalProvider>
   );
 }
@@ -70,19 +85,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  titleWrapper: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
   largeTitle: {
     fontSize: 24,
     fontWeight: "bold",
-  },
-  titleWrapper: {
-    marginTop: 80,
-    paddingHorizontal: 16
   },
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#A9ABB1',
     marginHorizontal: 16,
-    marginTop: 16
+    marginTop: 16,
   },
   bottomSheet: {
     shadowColor: "#000",
@@ -92,6 +107,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
-  }
+    elevation: 5,
+  },
 });
